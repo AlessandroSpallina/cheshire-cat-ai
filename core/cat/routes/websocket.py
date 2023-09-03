@@ -60,8 +60,9 @@ async def receive_message(websocket: WebSocket, ccat: object):
         # Run the `ccat` object's method in a threadpool since it might be a CPU-bound operation.
         cat_message = await run_in_threadpool(ccat, user_message)
 
-        # Send the response message back to the user.
-        await manager.send_personal_message(cat_message, websocket)
+        if not ccat._llm.streaming:
+            # Send the response message back to the user.
+            await manager.send_personal_message(cat_message, websocket)
 
 
 async def check_messages(websocket: WebSocket, ccat):

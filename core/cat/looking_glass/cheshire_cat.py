@@ -1,7 +1,7 @@
 import time
 from copy import deepcopy
 import traceback
-from typing import Literal, get_args
+from typing import Literal, get_args, Any
 import langchain
 import os
 from cat.log import log
@@ -11,8 +11,20 @@ from cat.mad_hatter.mad_hatter import MadHatter
 from cat.memory.working_memory import WorkingMemoryList
 from cat.memory.long_term_memory import LongTermMemory
 from cat.looking_glass.agent_manager import AgentManager
+from langchain.callbacks.streaming_stdout import BaseCallbackHandler
 
 MSG_TYPES = Literal["notification", "chat"]
+
+
+class StreamingWebsocketCallbackHandler(BaseCallbackHandler):
+    def __init__(self, send_ws_message) -> None:
+        self._send_ws_message = send_ws_message
+        super().__init__()
+
+    def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
+        print(token)
+        self._send_ws_message(token, "chat")
+
 
 # main class
 class CheshireCat:
@@ -86,6 +98,9 @@ class CheshireCat:
         """
         # LLM and embedder
         self._llm = self.mad_hatter.execute_hook("get_language_model")
+        if self._llm.streaming:
+            log("LLM is supporting streaming, a callback has been plugged into it!")
+            self._llm.callbacks = [StreamingWebsocketCallbackHandler(self.send_ws_message)]
         self.embedder = self.mad_hatter.execute_hook("get_language_embedder")
 
         # set the default prompt settings

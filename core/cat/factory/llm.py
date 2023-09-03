@@ -73,6 +73,7 @@ class LLMLlamaCppConfig(LLMSettings):
     top_k: int = 40
     top_p: float = 0.95
     repeat_penalty: float = 1.1
+    streaming: bool = True
     _pyclass: PyObject = CustomOpenAI
 
     class Config:
